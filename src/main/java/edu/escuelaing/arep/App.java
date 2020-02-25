@@ -12,7 +12,7 @@ public class App {
     private static httpServer server;
 
     public static void main(String[] args) {
-        server = new httpServer();
+        server = getServer();
         try {
             server.start();
         } catch (IOException e) {
@@ -20,5 +20,12 @@ public class App {
             e.printStackTrace();
         }
         
+    }
+
+    private static httpServer getServer() {
+        if(server==null){
+            server = new httpServer();
+        }
+        return server;
     }
 }
