@@ -4,6 +4,13 @@
 # Log file
 *.log
 
+.classpath
+.settings/
+.project
+target/
+.vscode
+bin/
+
 # BlueJ files
 *.ctxt
 
