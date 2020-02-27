@@ -11,8 +11,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
+
+import edu.escuelaing.arep.annotations.AnnnotationHandler;
 
 
 /**
@@ -26,15 +29,18 @@ public class httpResponder implements Runnable {
     static final String FILE_NOT_FOUND = "/NOT_FOUND.html";
     static final String METHOD_NOT_ALLOWED = "/NOT_SUPPORTED.html";
     static final String UNSUPPORTED_MEDIA_TYPE = "/NOT_SUPPORTED_MEDIA.html";
+    private Map<String, AnnnotationHandler> webAnnoted;
 
     /**
      * Worker constructor.
      * 
      * @param clntSocket client socket
-     * @param webAnnoted el map de las anotaciones web String (url a manejar), handler (de la anotacion)
+     * @param webAnnoted el map de las anotaciones web String (url a manejar),
+     *                   handler (de la anotacion)
      */
-    public httpResponder(Socket clntSocket) {
+    public httpResponder(Socket clntSocket, Map webAnnoted) {
         clientSocket = clntSocket;
+        this.webAnnoted = webAnnoted;
         
 
     }
@@ -65,6 +71,28 @@ public class httpResponder implements Runnable {
                     respond(out, dataOut, rFile, "text/html", "200", ROOT + DEFAULT, outS);
 
                 } 
+
+                else if(header[1].contains("/ann")){
+                    String petition = header[1];
+                    String param = "";
+                    String response ="";
+                    if (petition.contains("?")) {
+                        param = petition.substring(petition.indexOf("?") + 1, petition.length());
+                        petition=petition.substring(0, petition.indexOf("?"));
+                    }
+                    System.out.println("petition "+petition);
+                    if(webAnnoted.containsKey(petition)){
+                        if(param.equals("")){
+                            response = webAnnoted.get(petition).handle();
+                        }
+                        else{
+                            response = webAnnoted.get(petition).handle(param);
+                        }
+                        
+                        respondRaw(out, dataOut, response, "text/html", "200 OK");
+                    }
+                    
+                }
                 
                 else {
                     
@@ -195,6 +223,35 @@ public class httpResponder implements Runnable {
                 out.close();
                 reader.close();
             }
+        } catch (Exception e) {
+            System.out.println("erro en envio");
+            System.out.println(e);
+        }
+        out.flush();
+        out.close();
+
+    }
+
+    /**
+     * Este metodo responde la peticion al cliente devolviendo un html string
+     * @param out printwriter
+     * @param dataOut bufferedoutputstream
+     * @param response String respuesta
+     * @param type mime type
+     * @param code codigo http
+     */
+    private static void respondRaw(PrintWriter out, BufferedOutputStream dataOut, String response, String type, String code) {
+        String header = "HTTP/1.1 " + code + "\r\n" + "Access-Control-Allow-Origin: *\r\n" + "Content-type: " + type
+                + "\r\n";
+
+        try {
+            
+                header += "\r\n";
+                out.println(header);               
+                out.println(response);
+                out.flush();
+                out.close();
+            
         } catch (Exception e) {
             System.out.println("erro en envio");
             System.out.println(e);

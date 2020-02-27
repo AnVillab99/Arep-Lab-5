@@ -14,6 +14,7 @@ public class App {
     public static void main(String[] args) {
         server = getServer();
         try {
+            server.checkFiles();
             server.start();
         } catch (IOException e) {
             System.out.println("Error server, seguro al crear");
