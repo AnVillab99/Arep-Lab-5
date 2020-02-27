@@ -14,14 +14,18 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import edu.escuelaing.arep.DataBase.dataBase;
+import edu.escuelaing.arep.DataBase.Impl.DataBaseImpl;
 import edu.escuelaing.arep.annotations.AnnnotationHandler;
 import edu.escuelaing.arep.annotations.Web;
+
 
 public class httpServer {
 
     
-    int PORT;
-    int Threads =5;
+    private int PORT;
+    private int Threads =5;
+    private dataBase db;
     
     static private Map<String,AnnnotationHandler> webAnnoted = new HashMap<String,AnnnotationHandler>();
     
@@ -45,8 +49,8 @@ public class httpServer {
             try{ 
                 clientSocket = serverSocket.accept();
                 System.out.println("Conectado");
-                executioner.execute(new Thread(new httpResponder(clientSocket,webAnnoted)));
-                // Thread t1 = new Thread(new httpResponder(clientSocket));
+                executioner.execute(new Thread(new httpHandler(clientSocket,webAnnoted)));
+                // Thread t1 = new Thread(new httpHandler(clientSocket));
                 // t1.start();              
             }
             catch(Exception e){System.out.println("error "+e);
@@ -58,7 +62,13 @@ public class httpServer {
 
     }
 
-        
+    private dataBase getDb(){
+        if(db==null){
+            db = new DataBaseImpl();
+
+        }
+        return db;
+    }
 
     
     /**
@@ -99,35 +109,42 @@ public class httpServer {
     }
 
         
-        
-        private void checkAnnotations(ArrayList<File> folders){
-        for (File folder : folders) {
-            if (folder.exists()) {
-                for (String clase : folder.list()) {
-                    System.out.println(clase);
-                    if (clase.endsWith(".class")) {
-                        Class<?> c=null;
-                        try{
-                            System.out.println("busca la clase");
-                            c = Class.forName("edu.escuelaing.arep.annotations."+clase.substring(0, clase.indexOf(".")));
-                            System.out.println("hallo la clase");
-                            Method[] methods = c.getMethods();
-                            for (Method m : methods) {
-                                if (m.isAnnotationPresent(Web.class)) { 
-                                    System.out.println("hay una con anotacion");                                   
-                                    webAnnoted.put("/ann/" + m.getAnnotation(Web.class).value(), new AnnnotationHandler(m));
-                                    System.out.println("webannoted");
-                                }
+
+
+
+    
+    private void checkAnnotations(ArrayList<File> folders){
+    for (File folder : folders) {
+        if (folder.exists()) {
+            for (String clase : folder.list()) {
+                System.out.println(clase);
+                if (clase.endsWith(".class")) {
+                    Class<?> c=null;
+                    try{
+                        System.out.println("busca la clase");
+                        c = Class.forName("edu.escuelaing.arep.annotations."+clase.substring(0, clase.indexOf(".")));
+                        System.out.println("hallo la clase");
+                        Method[] methods = c.getMethods();
+                        for (Method m : methods) {
+                            if (m.isAnnotationPresent(Web.class)) { 
+                                System.out.println("hay una con anotacion");                                   
+                                webAnnoted.put("/ann/" + m.getAnnotation(Web.class).value(), new AnnnotationHandler(m));
+                                System.out.println("webannoted");
                             }
                         }
-                        catch(ClassNotFoundException cs){
-                            System.out.println("class not found exception : "+cs);
-                        }
-                    
                     }
+                    catch(ClassNotFoundException cs){
+                        System.out.println("class not found exception : "+cs);
+                    }
+                
                 }
             }
         }
+    }
+    }
+
+    public httpServer(){
+        db=getDb();
     }
 
 }

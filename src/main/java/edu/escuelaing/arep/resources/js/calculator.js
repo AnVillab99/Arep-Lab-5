@@ -10,28 +10,15 @@ calculator = (function () {
         },
         obtenerDatos: function () {     
             console.log("d");
-            window.location = window.location.href+"reto2/usuarios";
+            window.location = window.location.href+"db/usuarios";
         }
     };  
 })();
 calculadora = (function () {
     return {      
         getResultadosR: function (url,datas, callback) {
-            console.log("pidiendo ajax");
-        $.ajax({
-            url: url,
-            data: datas,
-            type: 'POST',
-            dataType: 'json',
-            contentType: 'application/javascript',
-            success: function(data){
-                console.log("data :"+data);
-                callback(data);
-            },
-            error: function(data){
-                console.log("error: "+JSON.stringify(datas));
-            },
-        });
+            console.log("pidiendo get");
+            $.get( "url", function( data ) {callback(data);});
         }
     };
 

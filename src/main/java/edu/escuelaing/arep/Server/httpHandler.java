@@ -15,13 +15,15 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import edu.escuelaing.arep.DataBase.dataBase;
+import edu.escuelaing.arep.DataBase.Impl.DataBaseImpl;
 import edu.escuelaing.arep.annotations.AnnnotationHandler;
-
+import org.apache.commons.io.FileUtils;
 
 /**
  * This class manage each petition to the server
  */
-public class httpResponder implements Runnable {
+public class httpHandler implements Runnable {
 
     private Socket clientSocket = null;
     static final String ROOT = System.getProperty("user.dir") + "/src/main/java/edu/escuelaing/arep/resources";
@@ -30,6 +32,7 @@ public class httpResponder implements Runnable {
     static final String METHOD_NOT_ALLOWED = "/NOT_SUPPORTED.html";
     static final String UNSUPPORTED_MEDIA_TYPE = "/NOT_SUPPORTED_MEDIA.html";
     private Map<String, AnnnotationHandler> webAnnoted;
+    private dataBase dBase;
 
     /**
      * Worker constructor.
@@ -38,9 +41,10 @@ public class httpResponder implements Runnable {
      * @param webAnnoted el map de las anotaciones web String (url a manejar),
      *                   handler (de la anotacion)
      */
-    public httpResponder(Socket clntSocket, Map webAnnoted) {
+    public httpHandler(Socket clntSocket, Map webAnnoted) {
         clientSocket = clntSocket;
         this.webAnnoted = webAnnoted;
+        dBase = new DataBaseImpl();
         
 
     }
@@ -64,6 +68,7 @@ public class httpResponder implements Runnable {
             String inputLine = in.readLine();
             String[] header = inputLine.split(" ");
             System.out.println("header " + header[1]);
+            System.out.println("pet :"+header[0]);
             if (header[0].equals("GET")) {
                 File rFile = null;
                 if (header[1].equals(" ") || header[1].equals("") || header[1].equals("/")) {
@@ -73,42 +78,39 @@ public class httpResponder implements Runnable {
                 } 
 
                 else if(header[1].contains("/ann")){
-                    String petition = header[1];
-                    String param = "";
-                    String response ="";
-                    if (petition.contains("?")) {
-                        param = petition.substring(petition.indexOf("?") + 1, petition.length());
-                        petition=petition.substring(0, petition.indexOf("?"));
-                    }
-                    System.out.println("petition "+petition);
-                    if(webAnnoted.containsKey(petition)){
-                        if(param.equals("")){
-                            response = webAnnoted.get(petition).handle();
-                        }
-                        else{
-                            response = webAnnoted.get(petition).handle(param);
-                        }
-                        
+                        String response = getAnnotationResponse(header);
                         respondRaw(out, dataOut, response, "text/html", "200 OK");
-                    }
-                    
                 }
-                
                 else {
+
+                    //reponderPeticion(header);
                     
                     String[] s = soportado(header[1]);
                     if (s[0].equals("ok")) {
-                        rFile = new File(ROOT + s[1] + header[1]);
-                        if (rFile.exists()) {
-                            respond(out, dataOut, rFile, s[2], "200", ROOT + s[1] + header[1], outS);
-                        } else {
-                            rFile = new File(ROOT, FILE_NOT_FOUND);
-
-                            respond(out, dataOut, rFile, "text/html", "404", ROOT + FILE_NOT_FOUND, outS);
+                        rFile = null;
+                        if(s[1]=="db"){
+                            String res = dbResponse(header[1]);
+                            rFile = new File(res);
+                            System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+                            System.out.println(res);
+                            
+                            System.out.println("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
+                            respond(out, dataOut, rFile, "text/html", "200", res, outS);
                         }
-                    } else {
+                        else{
+                            rFile = new File(ROOT + s[1] + header[1]);
+                        
+                            System.out.println("Path :"+ROOT + s[1] + header[1]);
+                            if (rFile.exists()) {
+                                respond(out, dataOut, rFile, s[2], "200", ROOT + s[1] + header[1], outS);
+                            } else {
+                                rFile = new File(ROOT, FILE_NOT_FOUND);
 
-                        System.out.println("es el header " + header[1]);
+                                respond(out, dataOut, rFile, "text/html", "404", ROOT + FILE_NOT_FOUND, outS);
+                            }
+                        }
+                    } 
+                    else {
                         rFile = new File(ROOT, UNSUPPORTED_MEDIA_TYPE);
                         respond(out, dataOut, rFile, "text/html", "415", ROOT + UNSUPPORTED_MEDIA_TYPE, outS);
 
@@ -145,8 +147,77 @@ public class httpResponder implements Runnable {
     }
 
 
+    private String getAnnotationResponse(String[] header) {
+        String petition = header[1];
+        String param = "";
+        String response = "";
+        if (petition.contains("?")) {
+            param = petition.substring(petition.indexOf("?") + 1, petition.length());
+            petition=petition.substring(0, petition.indexOf("?"));
+        }
+        System.out.println("petition "+petition);
+        if(webAnnoted.containsKey(petition)){
+            if(param.equals("")){
+                response = webAnnoted.get(petition).handle();
+            }
+            else{
+                response = webAnnoted.get(petition).handle(param);
+            }
+        }
+        return response;
+        
+    
+    }
+
+    private String dbResponse(String petition) {
+        String res="";
+        if(petition.equals("ususarios")){
+            String[] users = dBase.consultarUsuarios();
+            for (String s:users){
+                System.out.println(s);
+            }
+            res = createResponse(users);
+            
+
+        }
+        System.out.println("-------------------------------------------------");
+        
+        return res;   
+    }
+
+
     /**
-     * checks if the petition is supported, checks for the file type 
+     * This method crates the response with the info of the db on a html
+     * @param usuarios the array of info to put on a html
+     * @return the path of the html with the info
+     */
+    private static String createResponse(String[] usuarios) {
+        try{
+            File htmlTemplateFile = new File(ROOT+"/base.html");
+            String htmlString = FileUtils.readFileToString(htmlTemplateFile);
+            
+            String ans = "";
+            for (String s : usuarios) {
+                ans += "<tr><td>" + s + "</td></tr>";
+
+            }
+            htmlString = htmlString.replace("$body", ans);
+            File newHtmlFile = new File(ROOT+"/usuarios.html");
+            FileUtils.writeStringToFile(newHtmlFile, htmlString);
+            
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return ROOT+"/usuarios.html";
+
+    }
+
+
+    /**
+     * checks if the petition is supported, checks for the file type
+     * 
      * @param peticionGet the petition
      * @return string[] with the response, where to find the file, and the myme type
      */
@@ -170,7 +241,14 @@ public class httpResponder implements Runnable {
             ans[0] = "ok";
             ans[1] = "/js";
             ans[2] = "application/javascript";
-        } else {
+        }
+        else if(peticionGet.contains("/db/")){
+            ans[0]="ok";
+            ans[1]="db";
+            ans[2]="text/html";
+
+        } 
+        else {
             ans[0] = "error";
             ans[1] = "";
             ans[2] = "text/html";
@@ -195,6 +273,7 @@ public class httpResponder implements Runnable {
                 + "\r\n";
 
         String[] con = type.split("/");
+        System.out.println("file :"+filePath);
         try {
             if (con[0].equals("image")) {
                 BufferedImage image = ImageIO.read(response);

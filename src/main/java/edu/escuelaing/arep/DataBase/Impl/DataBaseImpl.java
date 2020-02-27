@@ -1,4 +1,4 @@
-package edu.escuelaing.arep.DataBase;
+package edu.escuelaing.arep.DataBase.Impl;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -8,8 +8,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+import edu.escuelaing.arep.DataBase.dataBase;
 
-public class db {
+
+public class DataBaseImpl implements dataBase{
 
 
 	private final static String url = "jdbc:postgresql://ec2-54-225-95-183.compute-1.amazonaws.com:5432/d1eklfanov8b4e";
@@ -18,12 +20,12 @@ public class db {
 	private static Connection conn;
 
 
-	public db(){}
+	public DataBaseImpl(){}
 	/***
 	 * Creates the connection to the database
 	 * @return
 	 */
-	public static Connection connect() {
+	public Connection connect() {
 		conn = null;
 		try {
 
@@ -44,8 +46,6 @@ public class db {
 	 */
 	public String[] consultarUsuarios() {
 		ResultSet rs;
-		// String SQL = "select exists(select 1 from users WHERE username=(?) and
-		// password = (?))";
 		String SQL = "select * from users";
 		String[] res = null;
 		try {
@@ -57,11 +57,14 @@ public class db {
                 us.add(rs.getString("username"));
 
 			}
+			System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
 			res=new String[us.size()];
 			for(int i=0;i<us.size();i++){
+				System.out.println("nombre usuario: "+us.get(i));
 				res[i]=us.get(i);
 
 			}
+			System.out.println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
 			
 			
 		} catch (SQLException ex) {
