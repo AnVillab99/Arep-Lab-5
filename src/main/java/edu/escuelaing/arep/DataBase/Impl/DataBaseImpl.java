@@ -28,10 +28,7 @@ public class DataBaseImpl implements dataBase{
 	public Connection connect() {
 		conn = null;
 		try {
-
-			System.out.println("crearla");
 			conn = DriverManager.getConnection(url, user, password);
-			
 			System.out.println("Connected to the PostgreSQL server successfully.");
 		} catch (SQLException e) {
 			System.out.println("error " + e.getMessage());
@@ -45,7 +42,7 @@ public class DataBaseImpl implements dataBase{
 	 * @return String[] the array of user names
 	 */
 	public String[] consultarUsuarios() {
-		ResultSet rs;
+		ResultSet rs = null;
 		String SQL = "select * from users";
 		String[] res = null;
 		try {
@@ -57,14 +54,11 @@ public class DataBaseImpl implements dataBase{
                 us.add(rs.getString("username"));
 
 			}
-			System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
 			res=new String[us.size()];
 			for(int i=0;i<us.size();i++){
-				System.out.println("nombre usuario: "+us.get(i));
 				res[i]=us.get(i);
 
 			}
-			System.out.println("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
 			
 			
 		} catch (SQLException ex) {

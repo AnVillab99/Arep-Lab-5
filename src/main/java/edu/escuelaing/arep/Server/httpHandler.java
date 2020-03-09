@@ -32,7 +32,7 @@ public class httpHandler implements Runnable {
     static final String METHOD_NOT_ALLOWED = "/NOT_SUPPORTED.html";
     static final String UNSUPPORTED_MEDIA_TYPE = "/NOT_SUPPORTED_MEDIA.html";
     private Map<String, AnnnotationHandler> webAnnoted;
-    private dataBase dBase;
+    private DataBaseImpl dBase;
 
     /**
      * Worker constructor.
@@ -67,8 +67,6 @@ public class httpHandler implements Runnable {
             outS = clientSocket.getOutputStream();
             String inputLine = in.readLine();
             String[] header = inputLine.split(" ");
-            System.out.println("header " + header[1]);
-            System.out.println("pet :"+header[0]);
             if (header[0].equals("GET")) {
                 File rFile = null;
                 if (header[1].equals(" ") || header[1].equals("") || header[1].equals("/")) {
@@ -79,6 +77,7 @@ public class httpHandler implements Runnable {
 
                 else if(header[1].contains("/ann")){
                         String response = getAnnotationResponse(header);
+                        System.out.println("cojio anotacion");
                         respondRaw(out, dataOut, response, "text/html", "200 OK");
                 }
                 else {
@@ -91,16 +90,11 @@ public class httpHandler implements Runnable {
                         if(s[1]=="db"){
                             String res = dbResponse(header[1]);
                             rFile = new File(res);
-                            System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-                            System.out.println(res);
-                            
-                            System.out.println("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
                             respond(out, dataOut, rFile, "text/html", "200", res, outS);
                         }
                         else{
                             rFile = new File(ROOT + s[1] + header[1]);
                         
-                            System.out.println("Path :"+ROOT + s[1] + header[1]);
                             if (rFile.exists()) {
                                 respond(out, dataOut, rFile, s[2], "200", ROOT + s[1] + header[1], outS);
                             } else {
@@ -155,7 +149,6 @@ public class httpHandler implements Runnable {
             param = petition.substring(petition.indexOf("?") + 1, petition.length());
             petition=petition.substring(0, petition.indexOf("?"));
         }
-        System.out.println("petition "+petition);
         if(webAnnoted.containsKey(petition)){
             if(param.equals("")){
                 response = webAnnoted.get(petition).handle();
@@ -171,16 +164,12 @@ public class httpHandler implements Runnable {
 
     private String dbResponse(String petition) {
         String res="";
-        if(petition.equals("ususarios")){
+        if(petition.endsWith("usuarios")){
             String[] users = dBase.consultarUsuarios();
-            for (String s:users){
-                System.out.println(s);
-            }
             res = createResponse(users);
             
 
         }
-        System.out.println("-------------------------------------------------");
         
         return res;   
     }
@@ -273,7 +262,6 @@ public class httpHandler implements Runnable {
                 + "\r\n";
 
         String[] con = type.split("/");
-        System.out.println("file :"+filePath);
         try {
             if (con[0].equals("image")) {
                 BufferedImage image = ImageIO.read(response);

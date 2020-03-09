@@ -28,7 +28,6 @@ public class AnnnotationHandler {
     public String handle(String arg) {
         String ans = null;
         try {
-            System.out.println("mehtod "+m+" args: "+arg);
             ans = (String) m.invoke(null, arg);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
