@@ -1,5 +1,5 @@
 # Arep-Lab-5
-[![CircleCI](https://circleci.com/gh/AnVillab99/BetterSpring.svg?style=svg)](https://circleci.com/gh/AnVillab99/BetterSpring)
+[![CircleCI](https://circleci.com/gh/AnVillab99/Arep-Lab-5.svg?style=svg)](https://circleci.com/gh/AnVillab99/Arep-Lab-5)
 
 This laboratory intends for the students to create a web server that answers http petitions employing with custom annotations and that is able to retrieve information from a data base.
 
